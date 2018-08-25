@@ -3,7 +3,11 @@
 [中文文档](README_CN.md "中文文档")
 
 ## Introduction
-This is a project build with [Workerman](https://github.com/walkor/Workerman "Workerman") to support [hlsjs-p2p-engine](https://github.com/cdnbye/hlsjs-p2p-engine "hlsjs-p2p-engine") signaler service.
+This is a project build with [Workerman](https://github.com/walkor/Workerman "Workerman").
+
+Cloud support [hlsjs-p2p-engine](https://github.com/cdnbye/hlsjs-p2p-engine "hlsjs-p2p-engine") signaler service.
+
+Technically support all WebRTC signaler service.
 
 Written in full pure PHP. High performance and support cluster.
 
@@ -13,52 +17,98 @@ Written in full pure PHP. High performance and support cluster.
 3. POSIX and PCNTL extensions for PHP
 
 ## Install
-About enviroment, you can review the webpage from [Workerman](http://www.workerman.net "Workerman")
+### CentOS
 
+	yum install php-cli php-process git gcc php-devel php-pear libevent-devel -y
+
+Basically this is already support you to run this project.
+But if you are face to more than 1000 connections, please read Optimize character.
+
+### Optimize
+
+If you are using PHP 5.3.3, you can only install libevent extension.
+
+	pecl install channel://pecl.php.net/libevent-0.1.0 
+	
+	//Attention: "libevent installation [autodetect]:" message Enter
+	
+	echo extension=libevent.so > /etc/php.d/libevent.ini
+	
+If your PHP version is higher than 5.3.3, install event extension will better.
+
+	pecl install event
+	
+	//Attention: Include libevent OpenSSL support [yes] : type "no" then Enter，
+	
+	//Attention: PHP Namespace for all Event classes :type "yes" then Enter
+	
+	//Otherwise just Enter.
+	
+	echo extension=event.so > /etc/php.d/event.ini
+	
 Download programe. 
 
 	git clone https://github.com/RayP2P/php-signaler
 
 ## Configure
 
-### Full package
-
-Don't really need to change anything. 
-You just need to change the ssl settings in Applications/RayP2P/start_gateway.php
-
-### Master
-
-Applications/RayP2P/start_gateway.php 
-
-1.Change the ssl settings. 
-
-2.Change the $gateway->lanIp to Lan interface IP. 
-
-
-### Cluster
-
-Applications/RayP2P/start_businessworker.php 
-
-1.Change $worker->registerAddress To Register IP. 
-
-## Running as service
-
-1.Running in Debug mode.
-
-	php php-signaler/start.php
-
-2.Running in Daemon mode.
-
-	php php-signaler/start.php -d
+all you need to focus is [config.php](https://github.com/RayP2P/php-signaler/blob/master/config.php "config.php")
 	
-3.Running in Master mode.(exclude bussniess worker)
+	//Gateway LanIP,change it when you are using in cluster.(public IP is also could be use, but not suggested.)
+	'lanIP'=>'127.0.0.1',
+	//Register Address
+	'registerAddress'=>'127.0.0.1',
+	//Register Listen Port
+	'registerPort'=>1238,
+	//Gateway Listen Port
+	'gatewayPort'=>80,
+	//using wss:// or ws://
+	'wss'=>false,
+	//wss cert
+	'wss_cert'=>'/root/server.crt',
+	//wss key
+	'wss_key'=>'/root/server.key',
+	//Gateway Workers
+	'gatewayWorkers'=>4,
+	//Bussiness Workers
+	'bussinessWorkers'=>4,
 
-	php php-signaler/master.php -d
+## Run in single server.
 	
-4.Running in Cluster mode.(only bussniess worker)
+	php php-signaler/start_all.php
+	
+	//test your signaler service. 
+	//if the test is success, add " -d" argument to running the service in daemon mode.
+	
+	php php-signaler/start_all.php -d
+	
+## Run in cluster mode.(at least need 2 servers,suggest at least 3 servers.)
 
-	php php-signaler/cluster.php -d
-
+	// Keep all server have the same content in config.php expect "lanIP"
+	// lanIP is only thing you must to change when you setting up Gateway Server.
+	
+	//1. run register server.[only need setup one server]
+	//This server is connecting gateway and worker.it will just a low loadAvg server.
+	
+	php php-signaler/start_register.php
+	
+	//2. run worker server.[when the loadAvg is higher than expect, you need add more.]
+	//This server is working to process all the logical.
+	
+	php php-signaler/start_worker.php
+	
+	//3. run gateway server.[when the loadAvg is higher than expect, you need add more.]
+	//This server is face to user, it needs public IP address.
+	
+	php php-signaler/start_gateway.php
+	
+	//4. Finally , test your signaler service. 
+	//if the test is success, add " -d" argument to running the service in daemon mode.
+	
+	php php-signaler/start_register.php -d
+	php php-signaler/start_worker.php -d
+	php php-signaler/start_gateway.php -d
+	
 ## Configure hlsjs-p2p-engine
 
 1.Change the signal address to your address
