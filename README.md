@@ -11,6 +11,24 @@ Technically support all WebRTC signaler service.
 
 Written in full pure PHP. High performance and support cluster.
 
+## Free Public Signal Service
+
+Websocket Address: wss://free.freesignal.net
+
+We are maintain a public and free signal service for everybody.
+
+Currently we use 
+
+2 servers for gateway
+
+2 servers for worker
+
+1 server for register
+
+We invite you to use our service, we will do the best as we can.
+
+Websocket Address: wss://free.freesignal.net
+
 ## Requires
 1. PHP 5.3 or Higher
 2. A POSIX compatible operating system (Linux, OSX, BSD)
